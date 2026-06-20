@@ -32,6 +32,7 @@ df = df_raw.copy()
 df["smoker_num"] = (df["smoker"] == "yes").astype(int)
 df["sex_num"]    = (df["sex"] == "male").astype(int)
 
+# Persiapan untuk model global (Grafik & Evaluasi)
 X_COLS = ["age", "bmi", "children"]
 Y_COL  = "charges"
 
@@ -41,7 +42,7 @@ y = df[Y_COL].values
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
-# --- Model OLS (Global) ---
+# --- Model OLS Global ---
 X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
 model = LinearRegression()
 model.fit(X_train, y_train)
@@ -52,6 +53,20 @@ rmse_global = np.sqrt(mean_squared_error(y_test, y_pred_global))
 mae_global  = mean_absolute_error(y_test, y_pred_global)
 n_g = len(y_test); p_g = len(X_COLS)
 r2_adj_global = 1 - (1 - r2_global) * (n_g - 1) / (n_g - p_g - 1)
+
+# --- Model Prediksi Akurat (Memperhitungkan Sex, Smoker & Region) ---
+df["is_southeast"] = (df["region"] == "southeast").astype(int)
+df["is_southwest"] = (df["region"] == "southwest").astype(int)
+df["is_northwest"] = (df["region"] == "northwest").astype(int)
+
+# Update: Menambahkan 'sex_num' ke dalam fitur prediksi
+X_pred_cols = ["age", "bmi", "children", "sex_num", "smoker_num", "is_southeast", "is_southwest", "is_northwest"]
+X_pred_full = df[X_pred_cols].values
+scaler_full = StandardScaler()
+X_pred_scaled = scaler_full.fit_transform(X_pred_full)
+
+model_full = LinearRegression()
+model_full.fit(X_pred_scaled, y)
 
 
 # ── Helpers Tema ──────────────────────────────────────────────────────────────
@@ -120,7 +135,7 @@ def make_pls_scores(df_sub, is_dark=False):
     return fig_to_b64(fig, bg_color)
 
 
-# ── Plot 3: PLS Loadings (BARU) ───────────────────────────────────────────────
+# ── Plot 3: PLS Loadings ──────────────────────────────────────────────────────
 def make_pls_loadings(df_sub, is_dark=False):
     bg_color, text_color, mut_color = get_theme_colors(is_dark)
     LINE_COLOR = "#4B5563" if is_dark else "#e2e8f0"
@@ -375,8 +390,8 @@ tbody td.charge{color:var(--text);font-weight:700;font-family:"JetBrains Mono",m
 .predict-card{background:var(--card);border:none;border-radius:24px; padding:2.5rem;margin-bottom:3.5rem;box-shadow:0 8px 30px var(--shadow)}
 .input-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1.5rem;margin-bottom:2rem}
 .inp-group label{display:block;font-size:0.9rem;color:var(--text);margin-bottom:0.6rem;font-weight:700}
-.inp-group input{width:100%;background:var(--bg);border:1px solid var(--border); border-radius:12px;color:var(--text);padding:0.8rem 1rem;font-size:1rem; outline:none;transition:all 0.2s;font-family:"JetBrains Mono",monospace; font-weight: 600;}
-.inp-group input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,103,29,0.15)}
+.inp-group input, .inp-group select {width:100%;background:var(--bg);border:1px solid var(--border); border-radius:12px;color:var(--text);padding:0.8rem 1rem;font-size:1rem; outline:none;transition:all 0.2s;font-family:"JetBrains Mono",monospace; font-weight: 600;}
+.inp-group input:focus, .inp-group select:focus {border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,103,29,0.15)}
 .btn-orange{background:linear-gradient(135deg, #FF7B00, #F95000);border:none; border-radius:99px;color:#fff;padding:0.8rem 2rem;font-size:1rem;font-weight:700; cursor:pointer;transition:all 0.2s; font-family: inherit; box-shadow: 0 4px 15px rgba(249, 80, 0, 0.25);}
 .btn-orange:hover{transform: translateY(-2px); box-shadow: 0 6px 20px rgba(249, 80, 0, 0.35);}
 .pred-result{margin-top:2rem;padding:1.5rem 2rem;background:var(--bg); border-radius:16px;display:none; text-align: center; border: 1px solid var(--border);}
@@ -477,12 +492,20 @@ tbody td.charge{color:var(--text);font-weight:700;font-family:"JetBrains Mono",m
     </table>
   </div>
 
-  <div class="section-title" id="prediksi">Prediksi <i>Masa Depanmu</i></div>
+  <div class="section-title" id="prediksi">Prediksi <i>Insurance</i></div>
   <div class="predict-card">
     <div class="input-grid">
       <div class="inp-group">
         <label>Age (Usia)</label>
         <input type="number" id="p-age" placeholder="e.g. 35" min="18" max="100" value="35"/>
+      </div>
+      <!-- INPUT BARU: SEX -->
+      <div class="inp-group">
+        <label>Sex (Jenis Kelamin)</label>
+        <select id="p-sex">
+          <option value="female">Female</option>
+          <option value="male">Male</option>
+        </select>
       </div>
       <div class="inp-group">
         <label>BMI</label>
@@ -491,6 +514,22 @@ tbody td.charge{color:var(--text);font-weight:700;font-family:"JetBrains Mono",m
       <div class="inp-group">
         <label>Children (Jumlah Anak)</label>
         <input type="number" id="p-children" placeholder="e.g. 2" min="0" max="10" value="2"/>
+      </div>
+      <div class="inp-group">
+        <label>Smoker (Perokok)</label>
+        <select id="p-smoker">
+          <option value="no">No</option>
+          <option value="yes">Yes</option>
+        </select>
+      </div>
+      <div class="inp-group">
+        <label>Region (Wilayah)</label>
+        <select id="p-region">
+          <option value="southwest">Southwest</option>
+          <option value="southeast">Southeast</option>
+          <option value="northwest">Northwest</option>
+          <option value="northeast">Northeast</option>
+        </select>
       </div>
     </div>
     <button class="btn-orange" onclick="predict()">Apply Prediction</button>
@@ -564,11 +603,13 @@ tbody td.charge{color:var(--text);font-weight:700;font-family:"JetBrains Mono",m
       <div class="chart-spinner"><div class="spin"></div> Memproses...</div>
       <div class="chart-label" id="lbl-pls-loadings">3. PLS Loadings (Arah/Pengaruh Variabel X)</div>
     </div>
-    <div class="chart-card" style="display:flex; align-items:center; justify-content:center; padding:2rem; text-align:center; background: transparent; box-shadow:none;">
-      <p style="color:var(--muted); line-height:1.6; font-size:0.95rem;">
-        <strong>Interpretasi PLS:</strong><br>
-        <strong>Scores Plot</strong> melihat apakah ada pengelompokan (klaster) pada baris data berdasarkan komponen latent.<br><br>
-        <strong>Loadings Plot</strong> menunjukkan seberapa besar kontribusi variabel <code style="color:var(--accent)">age, bmi, children</code> dalam memengaruhi model PLS. Panah yang panjang menjauhi pusat (0,0) memiliki bobot pengaruh yang paling kuat.
+    <div class="chart-card" style="display:flex; align-items:center; justify-content:center; padding:2rem; text-align:left; background: transparent; box-shadow:none;">
+      <p style="color:var(--text); line-height:1.7; font-size:0.95rem;">
+        <strong>Interpretasi PLS Components:</strong><br><br>
+        <span style="color:var(--accent); font-weight:700;">1. PLS Component 1</span><br>
+        Bukan hanya umur atau BMI secara terpisah, melainkan "variabel buatan/adonan" hasil kombinasi linear dari <code style="color:var(--accent)">age, bmi, children</code> yang diracik khusus agar <strong>paling kuat/jago</strong> menebak besaran biaya asuransi (charges).<br><br>
+        <span style="color:var(--accent); font-weight:700;">2. PLS Component 2</span><br>
+        Ini adalah kombinasi linear sisa yang tegak lurus (ortogonal) dari Komponen 1. Berfungsi untuk menangkap <strong>varians/detail pola charges yang belum terjelaskan</strong> oleh Komponen 1 demi meningkatkan presisi model.
       </p>
     </div>
   </div>
@@ -623,13 +664,17 @@ themeBtn.addEventListener("click", () => {
 
 async function predict(){
   const age = document.getElementById("p-age").value;
+  const sex = document.getElementById("p-sex").value; // Input Sex ditangkap
   const bmi = document.getElementById("p-bmi").value;
   const children = document.getElementById("p-children").value;
+  const smoker = document.getElementById("p-smoker").value;
+  const region = document.getElementById("p-region").value;
+  
   try {
     const res = await fetch("/predict", {
       method: "POST",
       headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({age, bmi, children})
+      body: JSON.stringify({age, sex, bmi, children, smoker, region}) // Dikirim ke backend
     });
     const data = await res.json();
     document.getElementById("pred-result").style.display = "block";
@@ -726,7 +771,7 @@ async function updateCharts(){
 
     setCardImg("card-heatmap", data.heatmap);
     setCardImg("card-pls-scores", data.pls_scores);
-    setCardImg("card-pls-loadings", data.pls_loadings); // Load grafik PLS baru
+    setCardImg("card-pls-loadings", data.pls_loadings); 
     setCardImg("card-scatter", data.scatter);
     setCardImg("card-avp",     data.act_vs_pred);
     setCardImg("card-res",     data.residual);
@@ -791,7 +836,7 @@ def charts_route():
             "n":             len(df_sub),
             "heatmap":       make_heatmap(df_sub, is_dark),
             "pls_scores":    make_pls_scores(df_sub, is_dark),
-            "pls_loadings":  make_pls_loadings(df_sub, is_dark), # Memanggil hasil render fungsi baru
+            "pls_loadings":  make_pls_loadings(df_sub, is_dark),
             "scatter":       make_scatter(df_sub, is_dark),
             "act_vs_pred":   make_actual_vs_pred(df_sub, is_dark),
             "residual":      make_residual(df_sub, is_dark),
@@ -804,10 +849,25 @@ def charts_route():
 def predict_route():
     body     = request.get_json()
     age      = float(body.get("age",      30))
+    sex      = body.get("sex", "female") # Menerima input Sex
     bmi      = float(body.get("bmi",      25))
     children = float(body.get("children", 0))
-    X_in = scaler.transform([[age, bmi, children]])
-    pred = model.predict(X_in)[0]
+    smoker   = body.get("smoker", "no")
+    region   = body.get("region", "southwest")
+
+    # Mapping kategorikal menjadi angka (One-Hot Logic)
+    sex_num    = 1 if sex == "male" else 0
+    smoker_num = 1 if smoker == "yes" else 0
+    is_se      = 1 if region == "southeast" else 0
+    is_sw      = 1 if region == "southwest" else 0
+    is_nw      = 1 if region == "northwest" else 0
+
+    # Gunakan model_full khusus prediksi (urutan harus sama persis dengan X_pred_cols di atas)
+    X_in = scaler_full.transform([[age, bmi, children, sex_num, smoker_num, is_se, is_sw, is_nw]])
+    pred = model_full.predict(X_in)[0]
+    
+    # Memastikan prediksi masuk akal (tidak minus)
+    pred = max(0, pred)
     return jsonify({"prediction": round(pred, 2)})
 
 
