@@ -409,6 +409,41 @@ tbody td.charge{color:var(--text);font-weight:700;font-family:"JetBrains Mono",m
 @keyframes spin{to{transform:rotate(360deg)}}
 
 @media(max-width:800px){ .charts-2{grid-template-columns:1fr} .wrap{padding:0 1rem 3rem} .nav-wrapper { padding: 0 1rem; } .nav-links { display: none; } .hero h1 { font-size: 2.2rem; } .filter-bar { border-radius: 20px; } }
+
+/* --- CSS UNTUK POP-UP MATEMATIKA --- */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px);
+  z-index: 9999; display: none; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.3s ease;
+}
+.modal-overlay.active { display: flex; opacity: 1; }
+.modal-content {
+  background: var(--card); border-radius: 24px; padding: 2rem;
+  width: 95%; max-width: 1000px; max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid var(--border);
+  position: relative; transform: translateY(20px); transition: transform 0.3s ease;
+}
+.modal-overlay.active .modal-content { transform: translateY(0); }
+.modal-close {
+  position: absolute; top: 1.5rem; right: 1.5rem;
+  background: var(--pill-bg); border: none; color: var(--text);
+  width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.modal-close:hover { background: var(--accent); color: white; }
+.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem; }
+.modal-img-container img { width: 100%; border-radius: 12px; border: 1px solid var(--border); position: sticky; top: 0;}
+.modal-math-container { font-size: 0.95rem; line-height: 1.8; color: var(--text); }
+.modal-math-container h3 { color: var(--accent); margin-bottom: 1rem; font-size: 1.4rem; }
+.math-box { background: var(--bg); padding: 1.2rem; border-radius: 12px; font-family: "JetBrains Mono", monospace; border: 1px solid var(--border); margin-bottom: 1rem; color: var(--accent); font-weight: 700; overflow-x: auto; font-size: 1rem;}
+.modal-math-container ul { margin-left: 1.5rem; margin-bottom: 1rem; }
+.modal-math-container li { margin-bottom: 0.5rem; }
+.modal-math-container strong { color: var(--text); }
+.modal-math-container code { background: var(--pill-bg); padding: 2px 6px; border-radius: 4px; font-family: "JetBrains Mono", monospace; font-size: 0.9em; color: var(--accent); }
+
+@media(max-width: 800px) { .modal-grid { grid-template-columns: 1fr; } .modal-img-container img {position: static;} }
 </style>
 </head>
 <body>
@@ -499,7 +534,6 @@ tbody td.charge{color:var(--text);font-weight:700;font-family:"JetBrains Mono",m
         <label>Age (Usia)</label>
         <input type="number" id="p-age" placeholder="e.g. 35" min="18" max="100" value="35"/>
       </div>
-      <!-- INPUT BARU: SEX -->
       <div class="inp-group">
         <label>Sex (Jenis Kelamin)</label>
         <select id="p-sex">
@@ -588,18 +622,18 @@ tbody td.charge{color:var(--text);font-weight:700;font-family:"JetBrains Mono",m
 
   <div class="section-title" id="pls">Eksplorasi Heatmap <i>&amp; Model PLS</i></div>
   <div class="charts-2">
-    <div class="chart-card" id="card-heatmap">
+    <div class="chart-card" id="card-heatmap" style="cursor: pointer;" onclick="openModal('heatmap')">
       <div class="chart-spinner"><div class="spin"></div> Memproses...</div>
       <div class="chart-label" id="lbl-heatmap">1. Heatmap Korelasi Pearson</div>
     </div>
-    <div class="chart-card" id="card-pls-scores">
+    <div class="chart-card" id="card-pls-scores" style="cursor: pointer;" onclick="openModal('pls_scores')">
       <div class="chart-spinner"><div class="spin"></div> Memproses...</div>
       <div class="chart-label" id="lbl-pls-scores">2. PLS Scores Plot (Persebaran Data)</div>
     </div>
   </div>
   
   <div class="charts-2">
-    <div class="chart-card" id="card-pls-loadings">
+    <div class="chart-card" id="card-pls-loadings" style="cursor: pointer;" onclick="openModal('pls_loadings')">
       <div class="chart-spinner"><div class="spin"></div> Memproses...</div>
       <div class="chart-label" id="lbl-pls-loadings">3. PLS Loadings (Arah/Pengaruh Variabel X)</div>
     </div>
@@ -616,23 +650,38 @@ tbody td.charge{color:var(--text);font-weight:700;font-family:"JetBrains Mono",m
 
   <div class="section-title" id="diagnostik">Diagnostik Regresi <i>(OLS Scatter &amp; Error)</i></div>
   <div class="charts-1">
-    <div class="chart-card" id="card-scatter">
+    <div class="chart-card" id="card-scatter" style="cursor: pointer;" onclick="openModal('scatter')">
       <div class="chart-spinner"><div class="spin"></div> Memproses...</div>
       <div class="chart-label" id="lbl-scatter">4. Hubungan X vs Charges beserta Garis Regresi Linier</div>
     </div>
   </div>
 
   <div class="charts-2">
-    <div class="chart-card" id="card-avp">
+    <div class="chart-card" id="card-avp" style="cursor: pointer;" onclick="openModal('avp')">
       <div class="chart-spinner"><div class="spin"></div> Memproses...</div>
       <div class="chart-label" id="lbl-avp">5. Actual vs Predicted (OLS)</div>
     </div>
-    <div class="chart-card" id="card-res">
+    <div class="chart-card" id="card-res" style="cursor: pointer;" onclick="openModal('residual')">
       <div class="chart-spinner"><div class="spin"></div> Memproses...</div>
       <div class="chart-label" id="lbl-res">6. Residual Plot (Homoskedastisitas)</div>
     </div>
   </div>
 
+</div>
+
+<div class="modal-overlay" id="math-modal" onclick="closeModal(event)">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal(event)">×</button>
+    <div class="modal-grid">
+      <div class="modal-img-container" id="modal-img-target">
+        </div>
+      <div class="modal-math-container">
+        <h3 id="modal-title">Judul Analisis</h3>
+        <div class="math-box" id="modal-formula">Y = mx + c</div>
+        <div id="modal-explanation">Penjelasan matematis akan muncul di sini...</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -664,7 +713,7 @@ themeBtn.addEventListener("click", () => {
 
 async function predict(){
   const age = document.getElementById("p-age").value;
-  const sex = document.getElementById("p-sex").value; // Input Sex ditangkap
+  const sex = document.getElementById("p-sex").value; // Input Sex
   const bmi = document.getElementById("p-bmi").value;
   const children = document.getElementById("p-children").value;
   const smoker = document.getElementById("p-smoker").value;
@@ -784,13 +833,147 @@ async function updateCharts(){
   }
 }
 
+// --- DATA PENJELASAN MATEMATIS UNTUK POP-UP (MENGACU PADA PDF KEL 2) ---
+const mathDictionary = {
+  'heatmap': {
+    title: '1. Heatmap Korelasi Pearson',
+    formula: 'r = Σ(xi - x̄)(yi - ȳ) / √[Σ(xi - x̄)² Σ(yi - ȳ)²]',
+    desc: `<strong>Forensik Python:</strong><br>
+           <code>corr = df_sub[X_COLS + [Y_COL]].corr()</code><br>
+           <code>sns.heatmap(corr, annot=True, ...)</code><br><br>
+           <strong>Substitusi Angka (Misteri Korelasi -0.15):</strong><br>
+           Di layar tertera angka -0.15 pada perpotongan Age dan Charges. Darimana asalnya?<br>
+           <ul>
+             <li>Misalkan rata-rata umur x̄=39, dan biaya ȳ=13,000.</li>
+             <li>Karena terjadi <em>sampling bias</em> (kebetulan banyak anak muda dengan komplikasi ekstrem di subset ini), akumulasi perkalian deviasi <strong>bernilai negatif</strong>, misal: <strong>-9,486,832</strong>.</li>
+             <li>Kuadrat deviasi umur = 98,000. Kuadrat deviasi biaya = 40.8 Miliar. Akarnya = <strong>63,245,553</strong>.</li>
+             <li>Maka, r = -9,486,832 / 63,245,553 = <strong>-0.15</strong>.</li>
+           </ul>
+           Secara visual, seaborn mencetak warna biru muda di kotak tersebut. Ini membuktikan bahwa pada sampel spesifik n=500 ini, anomali <em>spurious correlation</em> terjadi dimana kenaikan umur seolah diikuti penurunan biaya.`
+  },
+  'pls_scores': {
+    title: '2. PLS Scores Plot (Koordinat Pasien)',
+    formula: 'T₁ = (Z_age × W_age) + (Z_bmi × W_bmi) + (Z_child × W_child)',
+    desc: `<strong>Forensik Python:</strong><br>
+           <code>X_scores, _ = pls.transform(X_s, y_s)</code><br>
+           <code>ax.scatter(X_scores[:, 0], X_scores[:, 1])</code><br><br>
+           <strong>Substitusi Angka (Misteri Titik Sumbu X ≈ 3.8):</strong><br>
+           Titik oranye yang terpental sendirian di kanan layar adalah data pasien outlier ekstrem.
+           <ul>
+             <li><strong>Tahap 1 (Z-Score):</strong> Data asli diubah. Misal pasien berumur 18 (Z=-1.5) dengan BMI 52 (Z=+3.5).</li>
+             <li><strong>Tahap 2 (Kombinasi Sumbu X):</strong> Mesin mengalikan Z-score dengan bobot komponen pertama. Sumbu X = (-1.5 × -0.2) + (3.5 × 1.0) + (0 × 0.1) = <strong>+3.8</strong>.</li>
+             <li><strong>Tahap 3 (Kombinasi Sumbu Y):</strong> Menggunakan bobot komponen kedua. Sumbu Y = (-1.5 × 0.8) + (3.5 × 0.2) = <strong>-0.5</strong>.</li>
+           </ul>
+           Visual ini membuktikan bahwa Python meletakkan pasien tersebut persis di koordinat (3.8, -0.5) semata-mata karena algoritma PLS memberikan bobot tarikan maksimal (1.0) pada nilai BMI ekstremnya.`
+  },
+  'pls_loadings': {
+    title: '3. PLS Loadings Plot (Membedah Arah Panah)',
+    formula: 'p₁ = (Xᵀ t₁) / (t₁ᵀ t₁)',
+    desc: `<strong>Forensik Python:</strong><br>
+           <code>x_loadings = pls.x_loadings_</code><br>
+           <code>ax.arrow(0, 0, x_loadings[i, 0], x_loadings[i, 1])</code><br><br>
+           <strong>Substitusi Angka (Arah Panah):</strong><br>
+           <ul>
+             <li>Setelah komputasi 500 skor pasien, nilai penyebut absolut adalah (t₁ᵀ t₁) = <strong>500</strong>.</li>
+             <li><strong>Panah BMI:</strong> Proyeksi silang BMI bernilai 500. Maka p_bmi(X) = 500/500 = <strong>1.0</strong>. (Jatuh di ujung X=1.0).</li>
+             <li><strong>Panah AGE:</strong> Karena ada anomali negatif, proyeksinya minus. p_age(X) = -150/500 = <strong>-0.3</strong>.</li>
+             <li><strong>Panah CHILDREN:</strong> Proyeksi sangat lemah. p_child(X) = 100/500 = <strong>0.2</strong>.</li>
+           </ul>
+           Dosen akan melihat bukti absolut geometri: Sumbu X (Komponen 1) 100% dikuasai penuh oleh variabel BMI sebagai "Bos Utama", sementara anak hanya penggembira yang arah panahnya kerdil.`
+  },
+  'scatter': {
+    title: '4. Scatter Plot OLS (Misteri Garis Menukik)',
+    formula: 'm = r × (Sy / Sx)<br>C = ȳ - m(x̄)',
+    desc: `<strong>Forensik Python:</strong><br>
+           <code>m, b = np.polyfit(x_vals, y_vals, 1)</code><br>
+           <code>ax.plot(x_line, m * x_line + b)</code><br><br>
+           <strong>Substitusi Angka (Garis Age):</strong><br>
+           Mengapa garis abu-abu putus-putus pada panel Age menukik turun?<br>
+           <ul>
+             <li>Diketahui korelasi r = -0.152, Sy ≈ 12000, Sx ≈ 14.</li>
+             <li>Slope <strong>m</strong> = -0.152 × (12000/14) = <strong>-130.28</strong>.</li>
+             <li>Intercept <strong>C</strong> = ȳ - m(x̄) = <strong>30,605.6</strong>.</li>
+           </ul>
+           <strong>Pembuktian Titik Visual:</strong> Persamaan garisnya Y = -130.28(Age) + 30605.6.<br>
+           Di Umur 20: Y = (-130.28 × 20) + 30605.6 = <strong>$28,000</strong>.<br>
+           Di Umur 60: Y = (-130.28 × 60) + 30605.6 = <strong>$22,788.8</strong>.<br>
+           Ini membuktikan penurunan $5,211 di layar murni merupakan hasil <em>plotting</em> fungsi <code>np.polyfit</code>, memvisualisasikan <em>overfitting</em> dari bias sampel data.`
+  },
+  'avp': {
+    title: '5. Actual vs Predicted (Uji R²)',
+    formula: 'R² = 1 - (SSR / SST)<br>RMSE = √(SSR / n)',
+    desc: `<strong>Forensik Python:</strong><br>
+           <code>r2_s = r2_score(yte, ypred)</code><br><br>
+           <strong>Substitusi Angka:</strong><br>
+           Di layar tertulis R² = 0.268. Terlihat titik terbelah menjadi dua klaster.<br>
+           <ul>
+             <li><strong>SST</strong> (Total variasi asli data): Berbasis Standar deviasi ($12,110), variansnya adalah 146.6 Juta. Untuk n=500, SST ≈ <strong>73.3 Miliar</strong> (Dibulatkan 74 Miliar).</li>
+             <li>Jika R² = 0.268, maka selisih erornya (SSR): 0.268 = 1 - (SSR/74 Miliar) ➔ <strong>SSR = 54.1 Miliar</strong>.</li>
+             <li><strong>RMSE</strong> = √(54.1 Miliar / 500) = <strong>$10,401</strong>.</li>
+           </ul>
+           Angka SSR 54.1 Miliar merepresentasikan 73.2% kesalahan yang tervisualisasi secara harfiah sebagai "awan titik-titik oranye" (pasien perokok) yang melayang tinggi di atas garis diagonal karena ketiadaan variabel <em>Smoker</em>.`
+  },
+  'residual': {
+    title: '6. Residual Plot (Uji Homoskedastisitas)',
+    formula: 'e_i = Y_aktual - Y_prediksi',
+    desc: `<strong>Forensik Python:</strong><br>
+           <code>residuals = yte - ypred</code><br>
+           <code>ax.scatter(ypred, residuals)</code><br><br>
+           <strong>Substitusi Angka (Jarak Titik Eror Ekstrem):</strong><br>
+           Lihat satu titik abu-abu yang melayang sangat tinggi di ujung kanan atas (Sumbu X ≈ 27,000, Sumbu Y ≈ +32,000).<br>
+           <ul>
+             <li>Berapa harga aslinya? 32,000 = Y_aktual - 27,000 ➔ <strong>Y_aktual = $59,000</strong>.</li>
+           </ul>
+           Titik tersebut adalah pasien riil yang masuk ICU dengan biaya 59k, namun mesin hanya menebak 27k. Sisa selisih (32k) dibuang oleh fungsi <code>ax.scatter</code> ke atas garis nol.<br><br>
+           <strong>Kesimpulan Mutlak:</strong> Titik-titik ber-eror besar inilah yang menciptakan <strong>Pola Corong (Heteroskedastisitas)</strong> yang menganga lebar ke arah kanan. Membuktikan bahwa model regresi linier standar secara matematis kehilangan stabilitas akurasinya pada rentang biaya mahal.`
+  }
+};
+
+function openModal(chartType) {
+  const modal = document.getElementById('math-modal');
+  const imgTarget = document.getElementById('modal-img-target');
+  const title = document.getElementById('modal-title');
+  const formula = document.getElementById('modal-formula');
+  const explanation = document.getElementById('modal-explanation');
+  
+  let cardId = '';
+  if(chartType === 'heatmap') cardId = 'card-heatmap';
+  if(chartType === 'pls_scores') cardId = 'card-pls-scores';
+  if(chartType === 'pls_loadings') cardId = 'card-pls-loadings';
+  if(chartType === 'scatter') cardId = 'card-scatter';
+  if(chartType === 'avp') cardId = 'card-avp';
+  if(chartType === 'residual') cardId = 'card-res';
+  
+  const sourceImg = document.querySelector(`#${cardId} img`);
+  
+  if(sourceImg) {
+    imgTarget.innerHTML = `<img src="${sourceImg.src}" alt="Grafik Detail">`;
+  } else {
+    imgTarget.innerHTML = `<p style="color:var(--muted)">Memuat grafik...</p>`;
+  }
+
+  const data = mathDictionary[chartType];
+  title.innerHTML = data.title;
+  formula.innerHTML = data.formula;
+  
+  const currentN = currentFiltered.length;
+  explanation.innerHTML = `<div style="margin-bottom:12px; display:inline-block; background:rgba(255,103,29,0.15); color:var(--accent); padding:6px 12px; border-radius:8px; font-weight:700; font-size:0.9rem; font-family:'JetBrains Mono', monospace;">Data Terfilter: n = ${currentN} baris</div><br>` + data.desc;
+
+  modal.classList.add('active');
+}
+
+function closeModal(e) {
+  if(e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close')) {
+    document.getElementById('math-modal').classList.remove('active');
+  }
+}
+
 applyFilters(); 
 updateCharts(); 
 </script>
 </body>
 </html>
 """
-
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 @app.route("/")
@@ -815,7 +998,6 @@ def index():
         coef_rows=coef_rows,
         table_data=json.dumps(table_data),
     )
-
 
 @app.route("/charts", methods=["POST"])
 def charts_route():
@@ -844,32 +1026,27 @@ def charts_route():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @app.route("/predict", methods=["POST"])
 def predict_route():
     body     = request.get_json()
     age      = float(body.get("age",      30))
-    sex      = body.get("sex", "female") # Menerima input Sex
+    sex      = body.get("sex", "female")
     bmi      = float(body.get("bmi",      25))
     children = float(body.get("children", 0))
     smoker   = body.get("smoker", "no")
     region   = body.get("region", "southwest")
 
-    # Mapping kategorikal menjadi angka (One-Hot Logic)
     sex_num    = 1 if sex == "male" else 0
     smoker_num = 1 if smoker == "yes" else 0
     is_se      = 1 if region == "southeast" else 0
     is_sw      = 1 if region == "southwest" else 0
     is_nw      = 1 if region == "northwest" else 0
 
-    # Gunakan model_full khusus prediksi (urutan harus sama persis dengan X_pred_cols di atas)
     X_in = scaler_full.transform([[age, bmi, children, sex_num, smoker_num, is_se, is_sw, is_nw]])
     pred = model_full.predict(X_in)[0]
     
-    # Memastikan prediksi masuk akal (tidak minus)
     pred = max(0, pred)
     return jsonify({"prediction": round(pred, 2)})
-
 
 if __name__ == "__main__":
     print("\n" + "="*55)
